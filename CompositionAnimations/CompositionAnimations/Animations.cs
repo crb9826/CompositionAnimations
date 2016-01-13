@@ -7,45 +7,94 @@ using Windows.UI.Composition;
 using Windows.UI.Xaml.Hosting;
 using Windows.UI.Xaml;
 using System.Numerics;
-namespace CompositionAnimations
+namespace Windows.UI.Composition
 {
     /// <summary>
     /// Create composition animations using this class
     /// </summary>
     public static class Animations
     {
-
-        public static void Animate(this UIElement element, string propertyPath, float value, TimeSpan duration, TimeSpan delay, Vector2 bezierControlPoint1, Vector2 bezierControlPoint2)
+        // UIElement extensions
+        public static void BeginScalarAnimation(UIElement element, string propertyPath, float to, float? from, TimeSpan duration, TimeSpan? delay, CompositionEasingFunction ease)
         {
-            // Animate the UIElement's underlying visual
-            Animate(ElementCompositionPreview.GetElementVisual(element), propertyPath, value, duration, delay, bezierControlPoint1, bezierControlPoint2);
+            element.GetVisual().BeginScalarAnimation(propertyPath, to, from, duration, delay, ease);
+        }
+        public static void BeginVector2Animation(UIElement element, string propertyPath, Vector2 to, Vector2? from, TimeSpan duration, TimeSpan? delay, CompositionEasingFunction ease)
+        {
+            element.GetVisual().BeginVector2Animation(propertyPath, to, from, duration, delay, ease);
+        }
+        public static void BeginVector3Animation(UIElement element, string propertyPath, Vector3 to, Vector3? from, TimeSpan duration, TimeSpan? delay, CompositionEasingFunction ease)
+        {
+            element.GetVisual().BeginVector3Animation(propertyPath, to, from, duration, delay, ease);
         }
 
-        public static void Animate(CompositionObject compObject, string propertyPath, float value, TimeSpan duration, TimeSpan delay)
+        // CompositionObject extensions
+        public static void BeginScalarAnimation(this CompositionObject compObj, string propertyPath, float to, float? from, TimeSpan duration, TimeSpan? delay, CompositionEasingFunction ease)
         {
-            Animate(compObject, propertyPath, value, duration, delay, compObject.Compositor.CreateLinearEasingFunction());
+            compObj.StartAnimation(propertyPath,
+                compObj.Compositor.CreateScalarKeyFrameAnimation(to, from, duration, delay, ease));
+        }
+        public static void BeginVector2Animation(this CompositionObject compObj, string propertyPath, Vector2 to, Vector2? from, TimeSpan duration, TimeSpan? delay, CompositionEasingFunction ease)
+        {
+            compObj.StartAnimation(propertyPath,
+                compObj.Compositor.CreateVector2KeyFrameAnimation(to, from, duration, delay, ease));
+        }
+        public static void BeginVector3Animation(this CompositionObject compObj, string propertyPath, Vector3 to, Vector3? from, TimeSpan duration, TimeSpan? delay, CompositionEasingFunction ease)
+        {
+            compObj.StartAnimation(propertyPath,
+                compObj.Compositor.CreateVector3KeyFrameAnimation(to, from, duration, delay, ease));
         }
 
-        public static void Animate(CompositionObject compObject, string propertyPath, float value, TimeSpan duration, TimeSpan delay, Vector2 bezierControlPoint1, Vector2 bezierControlPoint2)
+        // CompositorExtensions
+        public static ScalarKeyFrameAnimation CreateScalarKeyFrameAnimation(this Compositor compositor, float to, float? from, TimeSpan duration, TimeSpan? delay, CompositionEasingFunction ease)
         {
-            Animate(compObject, propertyPath, value, duration, delay, compObject.Compositor.CreateCubicBezierEasingFunction(bezierControlPoint1, bezierControlPoint2));
-        }
+            var ani = compositor.CreateScalarKeyFrameAnimation();
+            // Set duration and delay time
+            ani.Duration = duration;
+            if (delay.HasValue)
+                ani.DelayTime = delay.Value;
 
-        public static void Animate(CompositionObject compObject, string propertyPath, float value, TimeSpan duration, TimeSpan delay, CompositionEasingFunction ease)
-        {
-            // Create a float animation, set its properties based on the provided arguments
-            var scalarAni = compObject.Compositor.CreateScalarKeyFrameAnimation();
-            scalarAni.Duration = duration;
-            scalarAni.DelayTime = delay;
-            if (ease != null)
+            // Insert "to" and "from" keyframes
+            ani.InsertKeyFrame(1, to, ease ?? compositor.CreateLinearEasingFunction());
+            if (from.HasValue)
             {
-                scalarAni.InsertKeyFrame(1, value, ease);
+                ani.InsertKeyFrame(0, from.Value);
             }
-            else
+            return ani;
+        }
+        public static Vector2KeyFrameAnimation CreateVector2KeyFrameAnimation(this Compositor compositor, Vector2 to, Vector2? from, TimeSpan duration, TimeSpan? delay, CompositionEasingFunction ease)
+        {
+            var ani = compositor.CreateVector2KeyFrameAnimation();
+
+            // Set duration and delay time
+            ani.Duration = duration;
+            if (delay.HasValue)
+                ani.DelayTime = delay.Value;
+
+            // Insert "to" and "from" keyframes
+            ani.InsertKeyFrame(1, to, ease ?? compositor.CreateLinearEasingFunction());
+            if (from.HasValue)
             {
-                scalarAni.InsertKeyFrame(1, value);
+                ani.InsertKeyFrame(0, from.Value);
             }
-            compObject.StartAnimation(propertyPath, scalarAni);
+            return ani;
+        }
+        public static Vector3KeyFrameAnimation CreateVector3KeyFrameAnimation(this Compositor compositor, Vector3 to, Vector3? from, TimeSpan duration, TimeSpan? delay, CompositionEasingFunction ease)
+        {
+            var ani = compositor.CreateVector3KeyFrameAnimation();
+
+            // Set duration and delay time
+            ani.Duration = duration;
+            if (delay.HasValue)
+                ani.DelayTime = delay.Value;
+
+            // Insert "to" and "from" keyframes
+            ani.InsertKeyFrame(1, to, ease ?? compositor.CreateLinearEasingFunction());
+            if (from.HasValue)
+            {
+                ani.InsertKeyFrame(0, from.Value);
+            }
+            return ani;
         }
     }
 }
